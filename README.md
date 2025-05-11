@@ -18,12 +18,14 @@ pip git+https://github.com/gwenlake/nanoSAE
 
 You can train a Sparse Autoencoder as follows
 ```python
+import pandas as pd
 from nanosae import SAETrainer, TrainConfig
 
-train_cfg = TrainConfig(input_size=1024)
+data = pd.read_csv("dataset.csv")
 
+train_cfg = TrainConfig(input_size=1024)
 trainer = SAETrainer(config=train_cfg)
-model = trainer.train(data=embeddings)
+model = trainer.train(data=data)
 
 torch.save(model, "sae.pt")
 ```
