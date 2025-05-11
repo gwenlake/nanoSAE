@@ -1,3 +1,9 @@
+import pandas as pd
+
+# todo
+# use prompts, llms to analyse SAE features (Wd)
+# methodology: appendix C in https://arxiv.org/pdf/2408.00657
+
 INTERPRETER = """\
 You are a meticulous {type} researcher conducting an important investigation into a certain
 neuron in a language model trained on {subject} papers. Your task is to figure out what
@@ -71,3 +77,7 @@ Here is the abstract to predict: {abstract}
 
 Work through the steps thoroughly and analytically to predict whether the neuron will activate
 on this abstract."""
+
+
+def analyze_features(model):
+    dictionary = pd.DataFrame(model.decoder.weight.T.cpu().detach().numpy())

@@ -5,6 +5,7 @@ from umap import UMAP
 import hdbscan
 import plotly.express as px
 
+from .models import SAE
 
 def plot_umap(data):
     hdb = hdbscan.HDBSCAN(min_samples=3, min_cluster_size=3).fit(data)
@@ -22,7 +23,7 @@ def plot_umap(data):
     fig.show()
 
 
-def plot_umap_features(model):
+def plot_dictionary(model: SAE):
     data = pd.DataFrame(model.decoder.weight.T.cpu().detach().numpy())
     plot_umap(data)
 

@@ -3,7 +3,7 @@ __version__ = "0.1.0"
 from .config import TrainConfig
 from .models import SAE, SAETopK
 from .trainers import SAETrainer
-from .features import plot_umap_features, plot_umap
+from .plot import plot_umap, plot_dictionary
 
 __all__ = [
     "TrainConfig", 
@@ -11,5 +11,5 @@ __all__ = [
     "SAETopK",
     "SAETrainer",
     "plot_umap",
-    "plot_umap_features",
+    "plot_dictionary",
 ]

@@ -2,13 +2,13 @@
 name = "nanosae"
 version = "0.1.0"
 description = "A Simple and Fast Library for Training Sparse Autoencoders for Semantic Analysis"
-packages = [{ include = "nanosae" }]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=3.6.0",
     "hdbscan>=0.8.40",
+    "nanosae",
     "pandas>=2.2.3",
     "plotly>=6.0.1",
     "torch>=2.7.0",

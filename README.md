@@ -29,3 +29,16 @@ model = trainer.train(data=data)
 
 torch.save(model, "sae.pt")
 ```
+
+## Citation
+
+Please cite the package as follows:
+
+```
+@misc{gwenlakenanosae2025codebase,
+   title = {nanoSAE},
+   author = {Barthélémy, Sylvain and Béguec, Guillaume and De Parthenay, Antoine and Doyen, Elsa},
+   year = {2025},
+   howpublished = {\url{https://github.com/gwenlake/nanoSAE}},
+}
+```

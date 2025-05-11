@@ -547,6 +547,7 @@ dependencies = [
 requires-dist = [
     { name = "datasets", specifier = ">=3.6.0" },
     { name = "hdbscan", specifier = ">=0.8.40" },
+    { name = "nanosae", virtual = "." },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "plotly", specifier = ">=6.0.1" },
     { name = "torch", specifier = ">=2.7.0" },
