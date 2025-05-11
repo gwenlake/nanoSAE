@@ -2,7 +2,6 @@
 name = "nanosae"
 version = "0.1.0"
 description = "A Simple and Fast Library for Training Sparse Autoencoders for Semantic Analysis"
-authors = ["Sylvain Barthélémy", "Guillaume Béguec", "Antoine de Parthenay", "Elsa Doyen"]
 packages = [{ include = "nanosae" }]
 license = "MIT"
 readme = "README.md"
