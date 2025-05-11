@@ -8,13 +8,7 @@ from .config import TrainConfig
 from .models import SAE
 
 
-def get_lr_schedule(
-    total_steps: int,
-    warmup_steps: int,
-    decay_start: Optional[int] = None,
-    resample_steps: Optional[int] = None,
-    sparsity_warmup_steps: Optional[int] = None,
-) -> Callable[[int], float]:
+def get_lr_schedule(total_steps: int, decay_start: int, warmup_steps: Optional[int] = None) -> Callable[[int], float]:
     """
     Creates a learning rate schedule function with linear warmup followed by an optional decay phase.
 
@@ -25,71 +19,29 @@ def get_lr_schedule(
         total_steps: Total number of training steps
         warmup_steps: Steps for linear warmup from 0 to 1
         decay_start: Optional step to begin linear decay to 0
-        resample_steps: Optional period for repeating warmup pattern
         sparsity_warmup_steps: Used for validation with decay_start
 
     Returns:
         Function that computes LR scale factor for a given step
     """
-    if decay_start is not None:
-        assert resample_steps is None, (
-            "decay_start and resample_steps are currently mutually exclusive."
-        )
-        assert 0 <= decay_start < total_steps, "decay_start must be >= 0 and < steps."
-        assert decay_start > warmup_steps, "decay_start must be > warmup_steps."
-        if sparsity_warmup_steps is not None:
-            assert decay_start > sparsity_warmup_steps, (
-                "decay_start must be > sparsity_warmup_steps."
-            )
-
+    assert 0 <= decay_start < total_steps, "decay_start must be >= 0 and < steps."
+    assert decay_start > warmup_steps, "decay_start must be > warmup_steps."
     assert 0 <= warmup_steps < total_steps, "warmup_steps must be >= 0 and < steps."
 
-    if resample_steps is None:
+    def lr_schedule(step: int) -> float:
+        if warmup_steps and step < warmup_steps:
+            # Warm-up phase
+            return step / warmup_steps
 
-        def lr_schedule(step: int) -> float:
-            if step < warmup_steps:
-                # Warm-up phase
-                return step / warmup_steps
+        if step >= decay_start:
+            # Decay phase
+            return (total_steps - step) / (total_steps - decay_start)
 
-            if decay_start is not None and step >= decay_start:
-                # Decay phase
-                return (total_steps - step) / (total_steps - decay_start)
-
-            # Constant phase
-            return 1.0
-    else:
-        assert 0 < resample_steps < total_steps, "resample_steps must be > 0 and < steps."
-
-        def lr_schedule(step: int) -> float:
-            return min((step % resample_steps) / warmup_steps, 1.0)
+        # Constant phase
+        return 1.0
 
     return lr_schedule
 
-
-def get_sparsity_warmup_fn(
-    total_steps: int, sparsity_warmup_steps: Optional[int] = None
-) -> Callable[[int], float]:
-    """
-    Return a function that computes a scale factor for sparsity penalty at a given step.
-
-    If `sparsity_warmup_steps` is None or 0, returns 1.0 for all steps.
-    Otherwise, scales from 0.0 up to 1.0 across `sparsity_warmup_steps`.
-    """
-
-    if sparsity_warmup_steps is not None:
-        assert 0 <= sparsity_warmup_steps < total_steps, (
-            "sparsity_warmup_steps must be >= 0 and < steps."
-        )
-
-    def scale_fn(step: int) -> float:
-        if not sparsity_warmup_steps:
-            # If it's None or zero, we just return 1.0
-            return 1.0
-        else:
-            # Gradually increase from 0.0 -> 1.0 as step goes from 0 -> sparsity_warmup_steps
-            return min(step / sparsity_warmup_steps, 1.0)
-
-    return scale_fn
 
 class SAETrainer:
     """
@@ -117,16 +69,20 @@ class SAETrainer:
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, betas=(self.config.beta1, self.config.beta2))
 
-        lr_fn = get_lr_schedule(self.config.steps, self.config.warmup_steps, self.config.decay_start, resample_steps=None, sparsity_warmup_steps=self.config.sparsity_warmup_steps)
-        self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
-        self.sparsity_warmup_fn = get_sparsity_warmup_fn(self.config.steps, self.config.sparsity_warmup_steps)
+        # learning rate linear decay (Anthropic Apr 2024)
+        self.scheduler = None
+        if self.config.decay_start:
+            lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.decay_start, warmup_steps=self.config.warmup_steps)
+            self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
 
     def loss(self, x, step: int, logging=False, **kwargs):
 
+        # sparsity scale warmup (Anthropic Apr 2024)
         sparsity_scale = 1.0
-        if self.sparsity_warmup_fn:
-            sparsity_scale = self.sparsity_warmup_fn(step)
+        if self.config.sparsity_warmup_steps:
+            sparsity_scale = min(step / self.config.sparsity_warmup_steps, 1.0)
 
+        # loss
         x_hat, f = self.model(x, output_features=True)
         l2_loss = torch.linalg.norm(x - x_hat, dim=-1).mean()
         recon_loss = (x - x_hat).pow(2).sum(dim=-1).mean()
@@ -134,6 +90,7 @@ class SAETrainer:
 
         loss = recon_loss + self.config.l1_penalty * sparsity_scale * l1_loss
 
+        # logging
         if not logging:
             return loss
         else:
@@ -155,7 +112,8 @@ class SAETrainer:
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
         self.optimizer.step()
-        self.scheduler.step()
+        if self.scheduler:
+            self.scheduler.step()
 
     def train(self, data):
         dataset = torch.FloatTensor(data).to(self.config.device)

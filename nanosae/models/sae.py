@@ -9,7 +9,7 @@ class SAE(nn.Module):
     The autoencoder architecture and initialization used in
     https://transformer-circuits.pub/2024/april-update/index.html#training-saes
     """
-    
+
     def __init__(self, input_size: int, hidden_size: int):
         super().__init__()
         self.input_size = input_size
@@ -41,15 +41,17 @@ class SAE(nn.Module):
         return F.normalize(self.decoder.weight, dim=0)
     
     def forward(self, x, output_features=False):
-        if not output_features:
-            return self.decode(self.encode(x))
-        else:
-            f = self.encode(x)
-            x_hat = self.decode(f)
-            # multiply f by decoder column norms
-            f = f * self.decoder.weight.norm(dim=0, keepdim=True)
-            return x_hat, f
+        f     = self.encode(x)
+        x_hat = self.decode(f)
+        # multiply f by decoder column norms
+        f = f * self.decoder.weight.norm(dim=0, keepdim=True)
 
+        if output_features:
+            return x_hat, f
+        else:
+            return x_hat
+
+    @classmethod
     def from_pretrained(path, device=None):
         model = torch.load(path, weights_only=False)
         if device is not None:
