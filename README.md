@@ -14,9 +14,9 @@ The code is adapted from the excellent [Dictionary Learning library](https://git
 pip git+https://github.com/gwenlake/nanoSAE
 ```
 
-# Training a Sparse Autoencoder (SAE)
+## Training a model
 
-You can train a SAE as follows
+You can train a Sparse Autoencoder as follows
 ```python
 from nanosae import SAETrainer, TrainConfig
 
