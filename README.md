@@ -11,7 +11,7 @@ The code is adapted from the excellent [Dictionary Learning library](https://git
 ## Install
 
 ```bash
-pip git+https://github.com/gwenlake/nanoSAE
+pip install git+https://github.com/gwenlake/nanoSAE
 ```
 
 ## Training a model
