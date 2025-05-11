@@ -9,6 +9,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=3.6.0",
+    "hdbscan>=0.8.40",
     "pandas>=2.2.3",
     "plotly>=6.0.1",
     "torch>=2.7.0",
