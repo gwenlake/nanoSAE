@@ -57,4 +57,3 @@ class SAE(nn.Module):
         if device is not None:
             model.to(device)
         return model
-
