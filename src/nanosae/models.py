@@ -1,6 +1,3 @@
-from typing import Union
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 import torch.nn.init as init

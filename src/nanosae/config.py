@@ -15,12 +15,11 @@ class TrainConfig:
     warmup_steps: int = None
     sparsity_warmup_steps: int = None
     decay_start: int = None
-    topk: int = None
-    topk_threshold: float = None
     seed: int = 42
     device: str = None
     wandb_name: str = None
 
+    @staticmethod
     def from_json(path):
         with open(path, "r") as f:
             config = TrainConfig(**json.load(f))
