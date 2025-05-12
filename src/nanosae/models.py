@@ -1,3 +1,6 @@
+from typing import Union
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -51,8 +54,8 @@ class SAE(nn.Module):
         """Dictionary elements are simply the normalized decoder weights."""
         return F.normalize(self.decoder.weight, dim=0)
     
-    @classmethod
-    def from_pretrained(cls, path: str, device=None):
+    @staticmethod
+    def from_pretrained(path: str, device=None):
         model = torch.load(path, weights_only=False)
         if device is not None:
             model.to(device)
