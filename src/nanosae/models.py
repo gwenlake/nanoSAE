@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+import numpy as np
+import pandas as pd
 
 from .config import SAEConfig
 
@@ -54,10 +56,22 @@ class SAE(nn.Module):
 
         return x_hat, f
 
+    def features(self, x):
+        return self.encode(x).detach().numpy()
+    
+    def features_df(self, x, top_k: int = None):
+        if isinstance(x, list):
+            x = torch.FloatTensor(np.array(x)).to(self.config.device)
+        f = self.features(x)
+        f = pd.DataFrame({"feature_id": range(self.hidden_size), "feature_value": f[0]})
+        if top_k is not None:
+            f = f.sort_values("feature_value", ascending=False).head(top_k)
+        return f
+
     @property
     def dictionary(self):
         """Dictionary elements are the normalized decoder weights."""
-        return F.normalize(self.decoder.weight, dim=0)
+        return F.normalize(self.decoder.weight, dim=0).T.detach().numpy()
     
     @staticmethod
     def from_pretrained(path: str, device="cpu") -> "SAE":
