@@ -1,11 +1,14 @@
+import os
 from typing import Optional, Callable
 from collections import namedtuple
 import torch
+import pandas as pd
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .config import SAETrainConfig
+from .config import SAEConfig
 from .models import SAE
+from .utils import zscore_normalize_rows
 
 
 def get_lr_schedule(total_steps: int, decay_start: int, warmup_steps: Optional[int] = None) -> Callable[[int], float]:
@@ -51,17 +54,12 @@ class SAETrainer:
     This trainer does not support resampling or ghost gradients.
     This trainer will have fewer dead neurons than the standard trainer.
     """
-    def __init__(self, config: SAETrainConfig):
+    def __init__(self, config: SAEConfig):
 
         self.config = config
 
-        # self.seed = seed
-        if self.config.seed is not None:
-            torch.manual_seed(self.config.seed)
-            torch.cuda.manual_seed_all(self.config.seed)
-
-        # initialize dictionary
-        self.model = SAE(input_size=self.config.input_size, hidden_size=self.config.hidden_size)
+        # initialize SAE
+        self.model = SAE(config=self.config)
 
         if self.config.device is None:
             self.config.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -71,19 +69,19 @@ class SAETrainer:
 
         # learning rate linear decay (Anthropic Apr 2024)
         self.scheduler = None
-        if self.config.decay_start:
-            lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.decay_start, warmup_steps=self.config.warmup_steps)
+        if self.config.lr_decay_start:
+            lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.lr_decay_start, warmup_steps=self.config.lr_warmup_steps)
             self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
 
     def loss(self, x, step: int, logging=False, **kwargs):
 
         # sparsity scale warmup (Anthropic Apr 2024)
         sparsity_scale = 1.0
-        if self.config.sparsity_warmup_steps:
-            sparsity_scale = min(step / self.config.sparsity_warmup_steps, 1.0)
+        if self.config.l1_warmup_steps:
+            sparsity_scale = min(step / self.config.l1_warmup_steps, 1.0)
 
         # loss
-        x_hat, f = self.model(x, output_features=True)
+        x_hat, f = self.model(x)
         l2_loss = torch.linalg.norm(x - x_hat, dim=-1).mean()
         recon_loss = (x - x_hat).pow(2).sum(dim=-1).mean()
         l1_loss = (f * self.model.decoder.weight.norm(p=2, dim=0)).sum(dim=-1).mean()
@@ -115,7 +113,15 @@ class SAETrainer:
         if self.scheduler:
             self.scheduler.step()
 
-    def train(self, data):
+    def train(self, data) -> SAE:
+
+        if isinstance(data, pd.DataFrame):
+            data = data.to_numpy()
+
+        if self.config.dataset_normalization == "zscore":
+            print("Normalizing data (zscore)")
+            data = zscore_normalize_rows(data)
+
         dataset = torch.FloatTensor(data).to(self.config.device)
 
         assert(dataset.shape[1] == self.config.input_size)
@@ -128,3 +134,7 @@ class SAETrainer:
 
         return self.model
     
+    def save(self, model: SAE, filepath: str):
+        if not os.path.exists(os.path.dirname(filepath)):
+            os.makedirs(os.path.dirname(filepath))
+        torch.save(model, filepath)
