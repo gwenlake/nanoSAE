@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .config import TrainConfig
+from .config import SAETrainConfig
 from .models import SAE
 
 
@@ -51,7 +51,7 @@ class SAETrainer:
     This trainer does not support resampling or ghost gradients.
     This trainer will have fewer dead neurons than the standard trainer.
     """
-    def __init__(self, config: TrainConfig):
+    def __init__(self, config: SAETrainConfig):
 
         self.config = config
 
@@ -67,7 +67,7 @@ class SAETrainer:
             self.config.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model.to(self.config.device)
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, betas=(self.config.beta1, self.config.beta2))
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, betas=(self.config.adam_beta1, self.config.adam_beta2))
 
         # learning rate linear decay (Anthropic Apr 2024)
         self.scheduler = None

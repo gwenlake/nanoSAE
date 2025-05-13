@@ -52,7 +52,7 @@ class SAE(nn.Module):
         return F.normalize(self.decoder.weight, dim=0)
     
     @staticmethod
-    def from_pretrained(path: str, device=None):
+    def from_pretrained(path: str, device=None) -> "SAE":
         model = torch.load(path, weights_only=False)
         if device is not None:
             model.to(device)
