@@ -43,6 +43,7 @@ class SAEConfig:
     dtype: str = "float32"  # type: ignore
 
     # Wandb
+    wandb_entity: str = None
     wandb_project: str = None
 
     @classmethod

@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Callable
 from collections import namedtuple
+import wandb
 import torch
 import pandas as pd
 from torch.utils.data import DataLoader
@@ -72,6 +73,15 @@ class SAETrainer:
         if self.config.lr_decay_start:
             lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.lr_decay_start, warmup_steps=self.config.lr_warmup_steps)
             self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
+        
+        self.wandb = None
+        if self.config.wandb_project and self.config.wandb_entity:
+            self.wandb = wandb.init(
+                entity=self.config.wandb_entity,
+                project=self.config.wandb_project,
+                config=self.config.to_dict(),
+                # name=self.config.run_name,
+            )
 
     def loss(self, x, step: int, logging=False, **kwargs):
 
@@ -87,6 +97,16 @@ class SAETrainer:
         l1_loss = (f * self.model.decoder.weight.norm(p=2, dim=0)).sum(dim=-1).mean()
 
         loss = recon_loss + self.config.l1_penalty * sparsity_scale * l1_loss
+
+        if self.wandb:
+            self.wandb.log(
+                {
+                    'l2_loss' : l2_loss.item(),
+                    'mse_loss' : recon_loss.item(),
+                    'sparsity_loss' : l1_loss.item(),
+                    'loss' : loss.item()
+                }
+            )
 
         # logging
         if not logging:
@@ -131,6 +151,9 @@ class SAETrainer:
         for step in tqdm(range(self.config.steps)):
             data = next(iter(train_dataloader))
             self.update(step=step, data=data)
+
+        if self.wandb:
+            self.wandb.finish()
 
         return self.model
     
