@@ -74,16 +74,7 @@ class SAETrainer:
             lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.lr_decay_start, warmup_steps=self.config.lr_warmup_steps)
             self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
         
-        self.wandb = None
-        if self.config.wandb_project and self.config.wandb_entity:
-            self.wandb = wandb.init(
-                entity=self.config.wandb_entity,
-                project=self.config.wandb_project,
-                config=self.config.to_dict(),
-                # name=self.config.run_name,
-            )
-
-    def loss(self, x, step: int, logging=False, **kwargs):
+    def loss(self, x, step: int, **kwargs):
 
         # sparsity scale warmup (Anthropic Apr 2024)
         sparsity_scale = 1.0
@@ -93,34 +84,24 @@ class SAETrainer:
         # loss
         x_hat, f = self.model(x)
         l2_loss = torch.linalg.norm(x - x_hat, dim=-1).mean()
-        recon_loss = (x - x_hat).pow(2).sum(dim=-1).mean()
+        mse = (x - x_hat).pow(2).sum(dim=-1).mean()
         l1_loss = (f * self.model.decoder.weight.norm(p=2, dim=0)).sum(dim=-1).mean()
 
-        loss = recon_loss + self.config.l1_penalty * sparsity_scale * l1_loss
+        loss = mse + self.config.l1_penalty * sparsity_scale * l1_loss
 
         if self.wandb:
             self.wandb.log(
                 {
+                    'loss' : loss.item(),
+                    'mse' : mse.item(),
+                    'l1_loss' : l1_loss.item(),
                     'l2_loss' : l2_loss.item(),
-                    'mse_loss' : recon_loss.item(),
-                    'sparsity_loss' : l1_loss.item(),
-                    'loss' : loss.item()
+                    'l1_penalty' : loss.item(),
+                    'sparsity_scale' : loss.item(),
                 }
             )
 
-        # logging
-        if not logging:
-            return loss
-        else:
-            return namedtuple('LossLog', ['x', 'x_hat', 'f', 'losses'])(
-                x, x_hat, f,
-                {
-                    'l2_loss' : l2_loss.item(),
-                    'mse_loss' : recon_loss.item(),
-                    'sparsity_loss' : l1_loss.item(),
-                    'loss' : loss.item()
-                }
-            )
+        return loss
 
 
     def update(self, step, data):
@@ -134,6 +115,15 @@ class SAETrainer:
             self.scheduler.step()
 
     def train(self, data) -> SAE:
+
+        self.wandb = None
+        if self.config.wandb_project and self.config.wandb_entity:
+            self.wandb = wandb.init(
+                entity=self.config.wandb_entity,
+                project=self.config.wandb_project,
+                config=self.config.to_dict(),
+                # name=self.config.run_name,
+            )
 
         if isinstance(data, pd.DataFrame):
             data = data.to_numpy()
