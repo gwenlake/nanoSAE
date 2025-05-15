@@ -26,7 +26,9 @@ class Embeddings:
             embeddings += self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value=output_value)
         return embeddings
     
-    def get_tokens(self, text: str):
+    def get_tokens(self, text: str, prefix: str = None):
+        if prefix:
+            text = prefix + text
         output = self.tokenizer(
             text,
             add_special_tokens=True,
@@ -40,8 +42,10 @@ class Embeddings:
         data = []
         for text in tqdm(input_text):
             embeddings = self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value="token_embeddings")
-            tokens = self.get_tokens(text)
+            tokens = self.get_tokens(text, prefix=prefix)
             for i, token in enumerate(tokens):
+                if prefix and i < 4:
+                    continue
                 if token not in EXCLUDED_TOKENS:
                     data.append({
                         "token": token,
