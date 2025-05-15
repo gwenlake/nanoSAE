@@ -19,16 +19,8 @@ class Embeddings:
 
     def embed(self, input_text: list[str], prefix: str = None, normalize_embeddings: bool = True, output_value: str = None):
         embeddings = []
-        if output_value == "token_embeddings":
-            for text in input_text:
-                embeddings += self._embed(text, prefix=prefix, output_value=output_value)
-            return embeddings
-        if len(input_text)==1:
-            text = input_text[0]
-            embeddings.append(self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings))
-        else:
-            for text in tqdm(input_text):
-                embeddings.append(self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings))
+        for text in tqdm(input_text):
+            embeddings.append(self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value=output_value))
         return embeddings
     
     def get_tokens(self, text: str):
