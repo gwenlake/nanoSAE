@@ -17,7 +17,7 @@ class Embeddings:
         if prefix:
             text = prefix + text
         if output_value == "token_embeddings":
-            return [[t.item() for t in e] for e in self.model.encode(text, output_value=output_value)]
+            return self.model.encode(text, output_value=output_value).tolist()
         return [self.model.encode(text, normalize_embeddings=normalize_embeddings).tolist()]
 
     def embed(self, input_text: list[str], prefix: str = None, normalize_embeddings: bool = True, output_value: str = None):
