@@ -1,6 +1,9 @@
 import torch
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
+
+EXCLUDED_TOKENS = ["<s>", "</s>", "<unk>", "<mask>", "<pad>"]
 
 class Embeddings:
 
@@ -15,12 +18,12 @@ class Embeddings:
             text = prefix + text
         if output_value == "token_embeddings":
             return [[t.item() for t in e] for e in self.model.encode(text, output_value=output_value)]
-        return self.model.encode(text, normalize_embeddings=normalize_embeddings).tolist()
+        return [self.model.encode(text, normalize_embeddings=normalize_embeddings).tolist()]
 
     def embed(self, input_text: list[str], prefix: str = None, normalize_embeddings: bool = True, output_value: str = None):
         embeddings = []
         for text in tqdm(input_text):
-            embeddings.append(self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value=output_value))
+            embeddings += self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value=output_value)
         return embeddings
     
     def get_tokens(self, text: str):
@@ -32,3 +35,18 @@ class Embeddings:
         )
         ids = output["input_ids"]
         return self.tokenizer.convert_ids_to_tokens(ids)
+
+    def get_token_df(self, input_text: list[str], prefix: str = None, normalize_embeddings: bool = True):
+        data = []
+        for text in tqdm(input_text):
+            embeddings = self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value="token_embeddings")
+            tokens = self.get_tokens(text)
+            for i, token in enumerate(tokens):
+                if token not in EXCLUDED_TOKENS:
+                    data.append({
+                        "token": token,
+                        "pos": i,
+                        "context": text,
+                        "embeddings": embeddings[i],
+                    })
+        return pd.DataFrame(data)
