@@ -77,7 +77,7 @@ class SAETrainer:
             lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.lr_decay_start, warmup_steps=self.config.lr_warmup_steps)
             self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
         
-    def loss(self, x, step: int, **kwargs):
+    def loss(self, x, step: int):
 
         # sparsity scale warmup (Anthropic Apr 2024)
         sparsity_scale = 1.0
@@ -86,19 +86,19 @@ class SAETrainer:
 
         # loss
         x_hat, f = self.model(x)
-        l2_loss = torch.linalg.norm(x - x_hat, dim=-1).mean()
-        mse = (x - x_hat).pow(2).sum(dim=-1).mean()
-        l1_loss = (f * self.model.decoder.weight.norm(p=2, dim=0)).sum(dim=-1).mean()
+        mse = torch.nn.functional.mse_loss(x, x_hat, reduction="mean").sum(dim=-1).mean()
+        l1_loss = torch.nn.functional.l1_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
+        l2_loss = torch.nn.functional.mse_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
 
         loss = mse + self.config.l1_penalty * sparsity_scale * l1_loss
 
         if self.wandb:
             self.wandb.log(
                 {
-                    'loss' : loss.item(),
                     'mse' : mse.item(),
                     'l1_loss' : l1_loss.item(),
                     'l2_loss' : l2_loss.item(),
+                    'loss' : loss.item(),
                     'sparsity_scale' : sparsity_scale,
                 }
             )
