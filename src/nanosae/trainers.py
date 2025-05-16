@@ -89,8 +89,9 @@ class SAETrainer:
         mse = torch.nn.functional.mse_loss(x, x_hat, reduction="mean").sum(dim=-1).mean()
         l1_loss = torch.nn.functional.l1_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
         l2_loss = torch.nn.functional.mse_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
+        sparsity_loss = self.config.l1_penalty * sparsity_scale * l1_loss
 
-        loss = mse + self.config.l1_penalty * sparsity_scale * l1_loss
+        loss = mse + sparsity_loss
 
         if self.wandb:
             self.wandb.log(
@@ -99,6 +100,7 @@ class SAETrainer:
                     'l1_loss' : l1_loss.item(),
                     'l2_loss' : l2_loss.item(),
                     'loss' : loss.item(),
+                    'sparsity_loss' : sparsity_loss,
                     'sparsity_scale' : sparsity_scale,
                 }
             )
