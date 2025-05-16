@@ -39,8 +39,7 @@ data = pd.read_csv("dataset.csv")
 # Configure the training parameters
 train_cfg = SAEConfig(
     input_size=1024,
-    hidden_size=4096,  # Number of features to learn
-    l1_coefficient=0.001  # Sparsity coefficient
+    hidden_size=5000,  # Size of the features dictionary
 )
 
 # Train model
