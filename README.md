@@ -4,41 +4,26 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/gwenlake/nanoSAE/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-A simple and fast Python library for training Sparse Autoencoders (SAEs) for semantic analysis.
+nanoSAE is a simple and fast Python library for training Sparse Autoencoders (SAEs) for semantic analysis.
 
-
-## 📋 Overview
-
-This repository presents the results of work carried out by the Gwenlake team (Sylvain Barthélémy, Guillaume Béguec, Antoine de Parthenay, and Elsa Doyen) as part of our investigation into the use of **Sparse Autoencoders (SAEs)** for semantic analysis.
+It is the results of work carried out by the Gwenlake team (Sylvain Barthélémy, Guillaume Béguec, Antoine de Parthenay, and Elsa Doyen) as part of our investigation into the use of Sparse Autoencoders (SAEs) for semantic analysis.
 
 These efforts build directly upon Anthropic's research, as detailed in the *"Towards Monosemanticity"* article series, which explores applying SAEs to the semantic interpretation of large language models via a dictionary-learning methodology.
 
-The code is adapted from the excellent [Dictionary Learning library](https://github.com/saprmarks/dictionary_learning), notably incorporating Anthropic's SAE implementation from their April 2024 update ([Training SAEs](https://transformer-circuits.pub/2024/april-update/index.html#training-saes)), as well as elements from ["Disentangling Dense Embeddings with Sparse Autoencoders"](https://arxiv.org/abs/2408.00657), particularly the feature-analysis methodology.
 
-## ✨ Features
+## What can nanoSAE do?
 
-- Simple API for training and using Sparse Autoencoders
-- Fast implementation optimized for performance
-- Comprehensive tools for semantic analysis
-- Integration with popular ML frameworks
-- Visualization utilities for feature analysis
+This repository condenses the entire sparse autoencoder workflow into a compact, high-performance package. With under a thousand lines of code, it delivers a fast, optimized training loop alongside boilerplate for logging, checkpoints, and configuration.
 
-## 🔧 Installation
+Beyond training, you gain comprehensive semantic‐analysis tools and visualization utilities that reveal activations, weight distributions, and learned structures at every stage. Whether you’re running large‐scale experiments, tuning hyperparameters, or digging deep into model behavior, this platform provides a simple yet powerful foundation for both rapid prototyping and rigorous research.
 
-### Requirements
-
-- Python 3.12 or higher
-- PyTorch 2.7.0 or higher
-
-### Install from GitHub
+## Installation
 
 ```bash
 pip install git+https://github.com/gwenlake/nanoSAE
 ```
 
-## 📚 Usage
-
-### Training a Sparse Autoencoder
+## Training a Sparse Autoencoder
 
 ```python
 import pandas as pd
@@ -65,7 +50,7 @@ model = trainer.train(data=data)
 torch.save(model, "sae.pt")
 ```
 
-### Using a Trained Model
+## Get features from a trained model
 
 ```python
 import torch
@@ -75,32 +60,15 @@ from nanosae import SAEModel
 model = torch.load("sae.pt")
 
 # Process new data
-activations = model.encode(new_data)
-reconstructed = model.decode(activations)
-
-# Analyze feature activations
-feature_stats = model.analyze_features(test_data)
+features = model.features(data)
 ```
 
-## 📊 Examples
+## Acknowledgements
 
-For more detailed examples, check out the [examples directory](https://github.com/gwenlake/nanoSAE/tree/main/examples).
+Built on Anthropic’s “Towards Semanticity” research—most notably their April 2024 update on training sparse autoencoders—this code adapts the excellent [Dictionary Learning library](https://github.com/saprmarks/dictionary_learning) to deliver a high-performance SAE implementation. It incorporates Anthropic’s own SAE training recipes from their April 2024 update ([Training SAEs](https://transformer-circuits.pub/2024/april-update/index.html#training-saes)) alongside key techniques from ["Disentangling Dense Embeddings with Sparse Autoencoders"](https://arxiv.org/abs/2408.00657), especially the feature-analysis methodology.
 
-## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📝 Citation
+## Citation
 
 If you use nanoSAE in your research, please cite it as follows:
 
@@ -112,9 +80,3 @@ If you use nanoSAE in your research, please cite it as follows:
    howpublished = {\url{https://github.com/gwenlake/nanoSAE}},
 }
 ```
-
-## 🙏 Acknowledgements
-
-- [Anthropic](https://www.anthropic.com/) for their groundbreaking research on Sparse Autoencoders
-- [Dictionary Learning library](https://github.com/saprmarks/dictionary_learning) for the foundational implementation
-- All contributors who have helped improve this project
