@@ -17,6 +17,8 @@ This repository condenses the entire sparse autoencoder workflow into a compact,
 
 Beyond training, you gain comprehensive semantic‐analysis tools and visualization utilities that reveal activations, weight distributions, and learned structures at every stage. Whether you’re running large‐scale experiments, tuning hyperparameters, or digging deep into model behavior, this platform provides a simple yet powerful foundation for both rapid prototyping and rigorous research.
 
+![loss](assets/nanoSAE-loss-wandb.png)
+
 ## Installation
 
 ```bash
