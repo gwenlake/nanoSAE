@@ -7,6 +7,7 @@ import pandas as pd
 
 from .config import SAEConfig
 
+
 class SAE(nn.Module):
     """
     The SAE architecture and initialization used in
