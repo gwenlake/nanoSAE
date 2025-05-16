@@ -9,7 +9,7 @@ class SAEConfig:
     # SAE parameters
     input_size: int
     hidden_size: int
-    model_name: str
+    model_name: str = None
     normalize_decoder: bool = False
 
     # Dataset
