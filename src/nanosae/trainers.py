@@ -99,8 +99,7 @@ class SAETrainer:
                     'mse' : mse.item(),
                     'l1_loss' : l1_loss.item(),
                     'l2_loss' : l2_loss.item(),
-                    'l1_penalty' : loss.item(),
-                    'sparsity_scale' : loss.item(),
+                    'sparsity_scale' : sparsity_scale,
                 }
             )
 
