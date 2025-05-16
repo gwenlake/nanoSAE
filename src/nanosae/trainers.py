@@ -28,9 +28,12 @@ def get_lr_schedule(total_steps: int, decay_start: int, warmup_steps: Optional[i
     Returns:
         Function that computes LR scale factor for a given step
     """
-    assert 0 <= decay_start < total_steps, "decay_start must be >= 0 and < steps."
-    assert decay_start > warmup_steps, "decay_start must be > warmup_steps."
-    assert 0 <= warmup_steps < total_steps, "warmup_steps must be >= 0 and < steps."
+    if decay_start:
+        assert 0 <= decay_start < total_steps, "decay_start must be >= 0 and < steps."
+        if warmup_steps:
+            assert decay_start > warmup_steps, "decay_start must be > warmup_steps."
+    if warmup_steps:
+        assert 0 <= warmup_steps < total_steps, "warmup_steps must be >= 0 and < steps."
 
     def lr_schedule(step: int) -> float:
         if warmup_steps and step < warmup_steps:
