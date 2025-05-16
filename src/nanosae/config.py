@@ -10,7 +10,6 @@ class SAEConfig:
     input_size: int
     hidden_size: int
     model_name: str = None
-    normalize_decoder: bool = False
 
     # Dataset
     context_size: int = 128

@@ -50,15 +50,12 @@ class SAE(nn.Module):
     def forward(self, x):
         f = self.encode(x)
         x_hat = self.decode(f)
-
-        if self.config.normalize_decoder:
-            # multiply f by decoder column norms
-            f = f * self.decoder.weight.norm(dim=0, keepdim=True)
-
         return x_hat, f
 
     def features(self, x):
-        return self.encode(x).detach().numpy()
+        f = self.encode(x)
+        f = (f * self.decoder.weight.norm(p=2, dim=0)).sum(dim=-1).mean()
+        return f.detach().numpy()
     
     def features_df(self, x, top_k: int = None):
         if isinstance(x, list):
@@ -68,11 +65,6 @@ class SAE(nn.Module):
         if top_k is not None:
             f = f.sort_values("feature_value", ascending=False).head(top_k)
         return f
-
-    @property
-    def dictionary(self):
-        """Dictionary elements are the normalized decoder weights."""
-        return F.normalize(self.decoder.weight, dim=0).T.detach().numpy()
     
     @staticmethod
     def from_pretrained(path: str, device="cpu") -> "SAE":
