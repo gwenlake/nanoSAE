@@ -45,6 +45,7 @@ class SAEConfig:
     # Wandb
     wandb_entity: str = None
     wandb_project: str = None
+    wandb_run_name: str = None
 
     @classmethod
     def from_json(cls, path) -> "SAEConfig":

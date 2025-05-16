@@ -125,7 +125,7 @@ class SAETrainer:
                 entity=self.config.wandb_entity,
                 project=self.config.wandb_project,
                 config=self.config.to_dict(),
-                # name=self.config.run_name,
+                name=self.config.wandb_run_name,
             )
 
         if isinstance(data, pd.DataFrame):
