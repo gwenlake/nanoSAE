@@ -30,38 +30,33 @@ pip install git+https://github.com/gwenlake/nanoSAE
 ```python
 import pandas as pd
 import torch
-from nanosae import SAETrainer, TrainConfig
+
+from nanosae import SAETrainer, SAEConfig
 
 # Load your dataset
 data = pd.read_csv("dataset.csv")
 
 # Configure the training parameters
-train_cfg = TrainConfig(
+train_cfg = SAEConfig(
     input_size=1024,
     hidden_size=4096,  # Number of features to learn
     l1_coefficient=0.001  # Sparsity coefficient
 )
 
-# Initialize the trainer
+# Train model
 trainer = SAETrainer(config=train_cfg)
-
-# Train the model
 model = trainer.train(data=data)
 
-# Save the trained model
+# Save model
 torch.save(model, "sae.pt")
 ```
 
 ## Get features from a trained model
 
 ```python
-import torch
-from nanosae import SAEModel
+from nanosae import SAE
 
-# Load the trained model
-model = torch.load("sae.pt")
-
-# Process new data
+model = SAE.from_pretrained("sae.pt")
 features = model.features(data)
 ```
 
