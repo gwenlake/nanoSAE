@@ -1,7 +1,18 @@
 import re
 import tiktoken
 import numpy as np
-import pandas as pd
+import torch
+
+
+def get_device() -> torch.device:
+    """
+    Helper function to return the correct device (cuda, mps, or cpu).
+    """
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    elif torch.cuda.is_available():
+        return torch.device("cuda")
+    return torch.device("cpu")
 
 def clean_text(text: str):
     text = text.replace("\n", " ")
