@@ -4,7 +4,18 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
 
-EXCLUDED_TOKENS = ["<s>", "</s>", "<unk>", "<mask>", "<pad>"]
+EXCLUDED_TOKENS = [
+    "<s>",
+    "</s>",
+    "<unk>",
+    "<mask>",
+    "<pad>",
+    "[UNK]",
+    "[SEP]",
+    "[PAD]",
+    "[CLS]",
+    "[MASK]"
+]
 
 
 class Embeddings:
