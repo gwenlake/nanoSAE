@@ -11,6 +11,9 @@ class SAEConfig:
     hidden_size: int
     model_name: str = None
 
+    # architecture
+    architecture: str = "standard"
+    
     # Dataset
     context_size: int = 128
     dataset_path: str = None

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .config import SAEConfig
-from .models import SAE
+from .sae import SAE
 from .utils import zscore_normalize_rows
 
 
@@ -109,11 +109,14 @@ class SAETrainer:
 
 
     def update(self, step, data):
+
         data = data.to(self.config.device)
         self.optimizer.zero_grad()
         loss = self.loss(data, step=step)
         loss.backward()
+
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+
         self.optimizer.step()
         if self.scheduler:
             self.scheduler.step()

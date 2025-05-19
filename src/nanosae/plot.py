@@ -5,7 +5,7 @@ from umap import UMAP
 import hdbscan
 import plotly.express as px
 
-from .models import SAE
+from .sae import SAE
 
 
 def plot_umap(data):
