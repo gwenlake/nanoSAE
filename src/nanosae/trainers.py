@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .config import SAEConfig
-from .sae import SAE
+from .models import SAE
 from .utils import zscore_normalize_rows
 
 
@@ -72,10 +72,10 @@ class SAETrainer:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, betas=(self.config.adam_beta1, self.config.adam_beta2))
 
         # learning rate linear decay (Anthropic Apr 2024)
-        self.scheduler = None
+        self.lr_scheduler = None
         if self.config.lr_decay_start:
             lr_fn = get_lr_schedule(total_steps=self.config.steps, decay_start=self.config.lr_decay_start, warmup_steps=self.config.lr_warmup_steps)
-            self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
+            self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lr_fn)
         
     def loss(self, x, step: int):
 
@@ -86,24 +86,30 @@ class SAETrainer:
 
         # loss
         x_hat, f = self.model(x)
-        mse = torch.nn.functional.mse_loss(x, x_hat, reduction="mean").sum(dim=-1).mean()
+        mse_loss = torch.nn.functional.mse_loss(x, x_hat, reduction="mean").sum(dim=-1).mean()
         l1_loss = torch.nn.functional.l1_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
-        l2_loss = torch.nn.functional.mse_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
+        # l2_loss = torch.nn.functional.mse_loss(x, x_hat, reduction="none").sum(dim=-1).mean()
         sparsity_loss = self.config.l1_penalty * sparsity_scale * l1_loss
 
-        loss = mse + sparsity_loss
+        loss = mse_loss + sparsity_loss
+
+        # l0 = (f > 0).float().sum(-1).mean()
+        current_learning_rate = self.optimizer.param_groups[0]["lr"]
 
         if self.wandb:
-            self.wandb.log(
-                {
-                    'mse' : mse.item(),
-                    'l1_loss' : l1_loss.item(),
-                    'l2_loss' : l2_loss.item(),
-                    'loss' : loss.item(),
-                    'sparsity_loss' : sparsity_loss,
-                    'sparsity_scale' : sparsity_scale,
-                }
-            )
+            log_dict = {
+                # losses
+                "losses/overall_loss": loss,
+                "losses/mse_loss": mse_loss,
+                "losses/sparsity_loss": sparsity_loss,
+                # sparsity
+                "sparsity/sparsity_scale": sparsity_scale,
+                "sparsity/l1_penalty": self.config.l1_penalty,
+                "sparsity/l1_loss": l1_loss,
+                # details
+                "details/current_learning_rate": current_learning_rate,
+            }
+            self.wandb.log(log_dict)
 
         return loss
 
@@ -118,8 +124,8 @@ class SAETrainer:
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
 
         self.optimizer.step()
-        if self.scheduler:
-            self.scheduler.step()
+        if self.lr_scheduler:
+            self.lr_scheduler.step()
 
     def train(self, data) -> SAE:
 

@@ -43,27 +43,25 @@ class SAE(nn.Module):
     #     self.threshold.data *= scale
 
     def encode(self, x):
-        if self.config.architecture == "anthropic":
-            return nn.ReLU()(self.encoder(x))
+        return nn.ReLU()(self.encoder(x))
 
+        # if self.config.architecture == "anthropic":
+        #     return nn.ReLU()(self.encoder(x))
         # elif self.config.architecture == "jumprelu":
         #     if self.apply_b_dec_to_input:
         #         x = x - self.b_dec
         #     pre_jump = x @ self.W_enc + self.b_enc
         #     f = nn.ReLU()(pre_jump * (pre_jump > self.threshold))
         #     return f
-
-        return nn.ReLU()(self.encoder(x - self.bias))
+        # return nn.ReLU()(self.encoder(x - self.bias))
 
     def decode(self, f):
-
-        if self.config.architecture == "anthropic":
-            return self.decoder(f)
-
+        return self.decoder(f)
+        # if self.config.architecture == "anthropic":
+        #     return self.decoder(f)
         # elif self.config.architecture == "jumprelu":
         #     return f @ self.W_dec + self.b_dec
-
-        return self.decoder(f) + self.bias
+        # return self.decoder(f) + self.bias
 
     def forward(self, x):
         f = self.encode(x)
@@ -89,7 +87,10 @@ class SAE(nn.Module):
     
     @staticmethod
     def from_pretrained(path: str, device="cpu") -> "SAE":
-        model = torch.load(path, weights_only=False)
-        if device is not None:
-            model.to(device)
+        if device == "cpu":
+            model = torch.load(path, weights_only=False, map_location=torch.device('cpu'))
+        else:
+            model = torch.load(path, weights_only=False)
+        # if device is not None:
+        #     model.to(device)
         return model

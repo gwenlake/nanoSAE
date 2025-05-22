@@ -42,7 +42,7 @@ class Embeddings:
             embeddings += self._embed(text, prefix=prefix, normalize_embeddings=normalize_embeddings, output_value=output_value)
         return embeddings
     
-    def get_tokens(self, text: str, prefix: str = None):
+    def to_str_tokens(self, text: str, prefix: str = None):
         if prefix:
             text = prefix + text
         output = self.tokenizer(
@@ -52,7 +52,6 @@ class Embeddings:
             return_attention_mask=False
         )
         ids = output["input_ids"]
-        
         return self.tokenizer.convert_ids_to_tokens(ids)
 
     def get_token_df(self, input_text: list[str], prefix: str = None):
@@ -60,31 +59,33 @@ class Embeddings:
 
         prefix_num_tokens = 0
         if prefix:
-            prefix_num_tokens = len(self.get_tokens(prefix))
+            prefix_num_tokens = len(self.to_str_tokens(prefix))
 
         for text in tqdm(input_text):
 
             embeddings = self._embed(text, prefix=prefix, output_value="token_embeddings")
-            tokens = self.get_tokens(text, prefix=prefix)
+            tokens = self.to_str_tokens(text, prefix=prefix)
 
-            if len(tokens) == len(embeddings):
-
-                for i, token in enumerate(tokens[:self.max_seq_length]):
-
-                    if prefix and i < (prefix_num_tokens - 1):
-                        continue
-                    if prefix and i == (prefix_num_tokens - 1):
-                        token = token.lstrip() # remove whitespace on first token if prefix
-
-                    if token not in EXCLUDED_TOKENS:
-                        data.append({
-                            "token": token,
-                            "pos": i,
-                            "context": text,
-                            "embeddings": embeddings[i],
-                        })
-
-            else:
+            if len(tokens) != len(embeddings):
                 print("Tokens missmatch:", len(tokens), "tokens", len(embeddings), "embeddings")
+                continue
+
+            for i, token in enumerate(tokens[:self.max_seq_length]):
+
+                if token in EXCLUDED_TOKENS:
+                    continue
+
+                if prefix and i < (prefix_num_tokens - 1):
+                    continue
+        
+                if prefix and i == (prefix_num_tokens - 1):
+                    token = token.lstrip() # remove whitespace on first token if prefix
+
+                data.append({
+                    "token": token,
+                    "pos": i,
+                    "context": text,
+                    "embeddings": embeddings[i],
+                })
 
         return pd.DataFrame(data)
